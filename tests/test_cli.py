@@ -127,6 +127,29 @@ def test_qualified_remove(home, capsys):
     assert "work" not in load_tome("work").commands
 
 
+def test_show_reports_correct_tome_for_cross_tome_name(home, capsys):
+    main(["add", "work:only", "echo only-in-work"])
+    assert main(["show", "only"]) == 0
+    out = capsys.readouterr().out
+    assert "tome:      work" in out
+    assert str(home / "work.toml") in out
+    assert "main.toml" not in out
+
+
+def test_run_cross_tome_unqualified_echoes_resolved_command(home, capsys, monkeypatch):
+    main(["add", "work:only", "echo only-in-work"])
+    calls = []
+
+    class Dummy:
+        returncode = 0
+
+    monkeypatch.setattr(
+        cli.subprocess, "run", lambda cmd, shell=True, check=False: calls.append(cmd) or Dummy()
+    )
+    assert main(["run", "only"]) == 0
+    assert calls == ["echo only-in-work"]
+
+
 def test_tome_management(home, capsys):
     assert main(["tome", "new", "deploy"]) == 0
     assert main(["tome", "list"]) == 0

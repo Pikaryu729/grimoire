@@ -185,8 +185,15 @@ def load_tome(tome: str) -> Tome:
         raise InvalidTome(
             f"tome {tome!r} is not valid TOML: {exc}\n  fix it with: grimoire edit {tome}"
         ) from exc
+    cmd = data.get("cmd")
+    if cmd is not None and not isinstance(cmd, dict):
+        raise InvalidTome(
+            f"tome {tome!r} has an invalid 'cmd' section "
+            f"(expected a table, got {type(cmd).__name__})\n"
+            f"  fix it with: grimoire edit {tome}"
+        )
     commands: dict[str, Command] = {}
-    for name, fields in (data.get("cmd") or {}).items():
+    for name, fields in (cmd or {}).items():
         if isinstance(fields, dict):
             commands[name] = Command.from_dict(name, fields)
     return Tome(name=tome, commands=commands)
@@ -259,30 +266,40 @@ def remove_command(tome: str, name: str) -> None:
     save_tome(t)
 
 
-def find_command(tome: str | None, name: str) -> Command:
-    """Find a command by name.
+def find_entry(tome: str | None, name: str) -> Entry:
+    """Find a command by name, returning the resolved :class:`Entry`.
 
     With a tome, only that tome is searched. Without one, the default tome
-    is preferred, then any single unique match across all tomes.
+    is preferred, then any single unique match across all tomes. The
+    returned Entry always carries the tome the command actually lives in.
     """
     if tome is not None:
         t = load_tome(tome)
         if name in t.commands:
-            return t.commands[name]
+            cmd = t.commands[name]
+            return Entry(tome, name, cmd.command, cmd.description, cmd.tags)
         raise CommandNotFound(f"no command named {tome}:{name}")
 
     try:
-        return load_tome(DEFAULT_TOME).commands[name]
+        cmd = load_tome(DEFAULT_TOME).commands[name]
+        return Entry(DEFAULT_TOME, name, cmd.command, cmd.description, cmd.tags)
     except (TomeNotFound, KeyError):
         pass
     matches = [e for e in all_entries() if e.name == name]
     if len(matches) == 1:
-        e = matches[0]
-        return Command(name=e.name, command=e.command, description=e.description, tags=e.tags)
+        return matches[0]
     if len(matches) > 1:
         where = ", ".join(e.qualified for e in matches)
         raise CommandNotFound(f"name {name!r} exists in multiple tomes: {where}")
     raise CommandNotFound(f"no command named {name!r}")
+
+
+def find_command(tome: str | None, name: str) -> Command:
+    """Find a command by name (see :func:`find_entry` for resolution rules)."""
+    entry = find_entry(tome, name)
+    return Command(
+        name=entry.name, command=entry.command, description=entry.description, tags=entry.tags
+    )
 
 
 def all_entries() -> list[Entry]:

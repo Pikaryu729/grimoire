@@ -32,7 +32,7 @@ from .store import (
     all_entries,
     delete_tome,
     ensure_tome,
-    find_command,
+    find_entry,
     list_tomes,
     load_tome,
     remove_command,
@@ -366,14 +366,7 @@ def cmd_run(
 
     tome, bare_name = parse_qualified(name)
     try:
-        command = find_command(tome, bare_name)
-        entry = Entry(
-            tome or DEFAULT_TOME,
-            bare_name,
-            command.command,
-            command.description,
-            command.tags,
-        )
+        entry = find_entry(tome, bare_name)
         return execute(entry, print_only)
     except CommandNotFound:
         entries = search(all_entries(), name, limit=10)
@@ -394,10 +387,7 @@ def cmd_run(
 @app.command("show")
 def cmd_show(name: str = typer.Argument(..., help="command name, or TOME:NAME")) -> int:
     tome, name = parse_qualified(name)
-    command = find_command(tome, name)
-    entry = Entry(
-        tome or DEFAULT_TOME, name, command.command, command.description, command.tags
-    )
+    entry = find_entry(tome, name)
     _print_command(entry)
     return 0
 
@@ -405,11 +395,11 @@ def cmd_show(name: str = typer.Argument(..., help="command name, or TOME:NAME"))
 @app.command("copy")
 def cmd_copy(name: str = typer.Argument(..., help="command name, or TOME:NAME")) -> int:
     tome, name = parse_qualified(name)
-    command = find_command(tome, name)
-    if copy_to_clipboard(command.command):
+    entry = find_entry(tome, name)
+    if copy_to_clipboard(entry.command):
         print(f"copied {name} to clipboard")
         return 0
-    print(command.command)
+    print(entry.command)
     _echo("no clipboard tool found; printed the command instead")
     return 0
 
