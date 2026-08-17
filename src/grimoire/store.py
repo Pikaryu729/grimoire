@@ -13,8 +13,10 @@ by command name::
     tags = ["process"]
 
 Tome files are human-editable. grimoire reads the keys it knows about and
-ignores anything else, so hand-rolled extras won't break loading. Writes
-are atomic (write-to-temp + rename).
+ignores anything else. The ``cmd`` section must be a table; a non-table
+``cmd`` value raises :class:`InvalidTome` — not silently ignored, which
+could drop data on the next save — with a hint to run ``grimoire edit``
+to repair the file. Writes are atomic (write-to-temp + rename).
 """
 
 from __future__ import annotations
