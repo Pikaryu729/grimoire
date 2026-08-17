@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "grimoire-cli"
+version = "0.1.0"
+description = "A command-line cheatsheet: save commands in tomes, search and run them."
+readme = "README.md"
+requires-python = ">=3.11"
+keywords = ["cli", "cheatsheet", "snippets", "commands", "tome"]
+classifiers = [
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Topic :: Terminals",
+]
+dependencies = [
+    "rich>=15.0.0",
+    "typer>=0.27.1",
+]
+
+[project.scripts]
+grimoire = "grimoire.cli:main"
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/grimoire"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
