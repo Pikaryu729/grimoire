@@ -1,0 +1,5 @@
+# no-mistakes project settings (trusted from the default branch).
+# This repository has no CI workflow; declaring no_ci: true lets the gate
+# treat an empty check list as green instead of monitoring for checks
+# that will never appear. Remove this if CI is added later.
+no_ci: true
