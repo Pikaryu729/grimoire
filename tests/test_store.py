@@ -66,6 +66,22 @@ def test_invalid_toml_reports_helpfully(home):
         store.load_tome("broken")
 
 
+def test_non_table_cmd_raises_helpfully(home):
+    (home / "main.toml").write_text('cmd = "oops"', encoding="utf-8")
+    with pytest.raises(store.InvalidTome, match="grimoire edit main"):
+        store.load_tome("main")
+
+
+def test_find_entry_resolves_correct_tome(home):
+    store.add_command("work", "only", "echo only-in-work")
+    entry = store.find_entry(None, "only")
+    assert entry.tome == "work"
+    assert entry.qualified == "work:only"
+    assert store.find_entry("work", "only").tome == "work"
+    with pytest.raises(store.CommandNotFound):
+        store.find_entry(None, "ghost")
+
+
 def test_invalid_names_rejected(home):
     with pytest.raises(store.GrimoireError):
         store.add_command("bad name", "x", "echo")
